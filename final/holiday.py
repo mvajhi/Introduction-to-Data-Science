@@ -1,7 +1,12 @@
 from bs4 import BeautifulSoup
 from persiantools.jdatetime import JalaliDate
+import datetime
+
 class Holiday:
-    def __init__(self, soup) -> None:
+    def __init__(self, soup: BeautifulSoup) -> None:
+        '''
+        soup: BeautifulSoup object of the 'https://www.time.ir/fa/eventyear-%D8%AA%D9%82%D9%88%DB%8C%D9%85-%D8%B3%D8%A7%D9%84%DB%8C%D8%A7%D9%86%D9%87'
+        '''
         self.soup = soup
         self.month_num = {
             'فروردین': 1,
@@ -19,8 +24,12 @@ class Holiday:
             'اسفند': 12
         }
 
-    def get_holidays(self) -> list[JalaliDate]:
-        holidays = []
+    def get_holidays(self, add_noroze:bool=False, add_thursday:bool=False) -> list[JalaliDate]:
+        '''
+        add_noroze: add noroze to holidays until 13 farvardin
+        add_thursday: add thursday to holidays
+        '''
+        holidays = list[JalaliDate]()
         holiday_divs = self.__find_holiday_div()
         for day_div in holiday_divs:
             if self.__is_valid_holiday(day_div):
@@ -28,7 +37,41 @@ class Holiday:
                 month = self.__get_month_num(day_div)
                 year = self.__get_year(day_div)
                 holidays.append(JalaliDate(year, month, day))
+        
+        if add_noroze:
+            noroze_holidays = self.__get_noroze(holidays[0]._year)
+            for h in noroze_holidays:
+                if h not in holidays:
+                    holidays.append(h)
+
+        if add_thursday:
+            thursday_holidays = self.__get_thursdays(holidays[0]._year)
+            for h in thursday_holidays:
+                if h not in holidays:
+                    holidays.append(h)
+
         return holidays
+
+    def __get_noroze(self, year:int) -> list[JalaliDate]:
+        noroze = []
+        for i in range(1, 14):
+            noroze.append(JalaliDate(year, 1, i))
+        return noroze
+
+    def __get_thursdays(self, year:int) -> list[JalaliDate]:
+        thursdays = []
+        tmp = self.__find_first_thursday(year)
+
+        while tmp._year == year:
+            thursdays.append(tmp)
+            tmp += datetime.timedelta(days=7)
+
+        return thursdays
+    
+    def __find_first_thursday(self, year:int) -> JalaliDate:
+        for i in range(1, 8):
+            if JalaliDate(year, 1, i).weekday() == 5:
+                return JalaliDate(year, 1, i)
 
     def __find_holiday_div(self) -> BeautifulSoup:
         return self.soup.find_all('div', class_='holiday')
