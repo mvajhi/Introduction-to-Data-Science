@@ -2,6 +2,10 @@ from bs4 import BeautifulSoup
 from persiantools.jdatetime import JalaliDate
 import datetime
 
+# TODO: add export to csv
+# TODO: work with year not soup object, send request and create soup object itself
+# TODO: add this package to pypi :)
+
 class Holiday:
     def __init__(self, soup: BeautifulSoup) -> None:
         '''
