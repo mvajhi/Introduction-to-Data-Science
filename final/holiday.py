@@ -117,12 +117,12 @@ class HolidayCalculator:
         self.day = day
         
         if not have_weekend:
-            self.holidays = self.__filter_weekend(holidays)
+            self.holidays = self.__filter_weekend()
         
         self.distance = self.__calculate_holidays_distance()
     
     def __filter_weekend(self) -> list[JalaliDate]:
-        return filter(self.holidays, lambda h: h.weekday() < 5)
+        return list(filter(lambda h: h.weekday() < 5, self.holidays))
     
     def __calculate_holidays_distance(self, day:JalaliDate=None) -> pd.Series:
         if day == None:
