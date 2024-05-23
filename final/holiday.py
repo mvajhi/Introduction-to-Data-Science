@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 from persiantools.jdatetime import JalaliDate
 import datetime
+import pandas as pd
 
 # TODO: add export to csv
 # TODO: work with year not soup object, send request and create soup object itself
@@ -106,3 +107,45 @@ class Holiday:
 
     def __get_month_num(self, day_div: BeautifulSoup) -> int:
         return self.month_num[self.__get_month(day_div)]
+    
+class HolidayCalculator:
+    def __init__(self, holidays: list[JalaliDate], day:JalaliDate, have_weekend:bool=True):
+        '''
+        if have_weekend friday and thursday (if in holidays) will be ignore
+        '''
+        self.holidays = sorted(holidays)
+        self.day = day
+        
+        if not have_weekend:
+            self.holidays = self.__filter_weekend(holidays)
+        
+        self.distance = self.__calculate_holidays_distance()
+    
+    def __filter_weekend(self) -> list[JalaliDate]:
+        return filter(self.holidays, lambda h: h.weekday() < 5)
+    
+    def __calculate_holidays_distance(self, day:JalaliDate=None) -> pd.Series:
+        if day == None:
+            day = self.day
+        return pd.Series(list(map(lambda h: (h - day).days, self.holidays)))
+    
+    def get_holidays_distance(self) -> list[int]:
+        return self.distance.to_list()
+
+    def get_n_next_holiday(self, n:int) -> list[int]:
+        return self.distance[self.distance > 0].nsmallest(n).tolist()
+    
+    def get_n_previous_holiday(self, n:int, abs_return:bool=True) -> list[int]:
+        if abs_return:
+            return [-i for i in self.distance[self.distance <= 0].nlargest(n)]
+        return self.distance[self.distance <= 0].nlargest(n).tolist()
+    
+    def get_holidays_this_week(self, count:bool=False) -> list[int]|int:
+        saturday = self.day - datetime.timedelta(self.day.weekday())
+        s = self.__calculate_holidays_distance(saturday)
+        
+        if count: 
+            return s[(7 > s) & (s >= 0)].count()
+            
+        return s[(7 > s) & (s >= 0)].to_list()
+    
