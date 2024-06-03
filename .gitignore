@@ -2,4 +2,8 @@
 geckodriver.log
 final/*.xlsx
 final/*.csv
+final/*/*.xlsx
+final/*/*.csv
+final/*/*/*.xlsx
+final/*/*/*.csv
 __pycache__/
