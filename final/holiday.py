@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from persiantools.jdatetime import JalaliDate
 import datetime
 import pandas as pd
+from typing import Literal
 
 # TODO: add export to csv
 # TODO: work with year not soup object, send request and create soup object itself
@@ -140,8 +141,13 @@ class HolidayCalculator:
             return [-i for i in self.distance[self.distance <= 0].nlargest(n)]
         return self.distance[self.distance <= 0].nlargest(n).tolist()
     
-    def get_holidays_this_week(self, count:bool=False) -> list[int]|int:
+    def get_holidays_this_week(self, count:bool=False, mode:Literal['This','Prev','Next']='This') -> list[int]|int:
         saturday = self.day - datetime.timedelta(self.day.weekday())
+        if mode == 'Prev':
+            saturday -= datetime.timedelta(7)
+        elif mode == 'Next':
+            saturday += datetime.timedelta(7)
+
         s = self.__calculate_holidays_distance(saturday)
         
         if count: 
